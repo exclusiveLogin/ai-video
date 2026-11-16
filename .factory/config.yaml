@@ -97,6 +97,9 @@ acceptance:
     - cmd: "python .factory/logs/check_vrezki.py"
       signal: "СОВПАДАЮТ"
       covers: "черновики врезок против глав"
+    - cmd: "python .factory/logs/check_text.py"
+      signal: "ЧИСТО"
+      covers: "дубли между главами, частые зачины, назван ли лейтмотив, двойные пояснения"
 
 # МОДЕЛИ: чего избегать
 model_notes:
