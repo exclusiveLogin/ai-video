@@ -1,0 +1,82 @@
+# Команда проекта: маршрутизация ролей, бюджеты, приёмка.
+# Читается людьми и инструментами: Hermes, Pi, Cursor, Codex.
+project: "Ролик про ИИ — сценарий (13 глав в v4/)"
+
+# ЧТО ГДЕ ЛЕЖИТ
+paths:
+  text: "v4/"                    # главы сценария
+  style: "v4/STYLE.md"           # закон языка
+  core: "v4/смысловое-ядро.md"   # карта смыслов
+  zloba: "v4/злоба-дня.md"       # реестр болей дня (только с якорем)
+  anchors: "v4/анкоры-рой.md"    # реестр исследований
+  briefs: ".factory/briefs/"     # задания
+  goals: ".factory/goals/"       # отчёты
+  drafts: ".factory/drafts/"     # врезки до вставки
+  checks: ".factory/logs/"       # скрипты проверок
+  archive: ".factory/archive/"   # история
+
+# РОЛИ: кто на чём сидит и что может
+roles:
+  lead:
+    harness: pi
+    role_flag: lead
+    model: null                  # модель инструмента; --model лиду не передавать
+    can: ["читать всё", "решать состав работы", "звать роли"]
+    cannot: ["писать главы"]
+    duty: "сверить бриф с деревом и не отдавать команде уже сделанное"
+
+  writer:
+    harness: pi
+    model: "cursor-acp/default"  # короткие правки
+    model_alt: "openrouter/deepseek/deepseek-v4.1-flash"  # если прогон длинный
+    can: ["править главы строго по брифу"]
+    cannot: ["менять смысл абзаца", "добавлять утверждения без основания", "коммитить"]
+
+  analyst:
+    harness: pi
+    model: "openrouter/deepseek/deepseek-v4.1-flash"
+    can: ["читать", "собирать документы и разборы"]
+    cannot: ["править главы", "коммитить"]
+
+  auditor:
+    harness: pi
+    role_flag: auditor
+    model: "openrouter/deepseek/deepseek-v4.1-flash"
+    can: ["читать", "выносить вердикт", "писать артефакт проверки"]
+    cannot: ["править текст", "коммитить"]
+    duty: "один заход на главу, после того как глава отредактирована целиком"
+
+  techwriter:
+    harness: pi
+    role_flag: techwriter
+    model: "openrouter/deepseek/deepseek-v4.1-flash"
+    can: ["править служебные документы"]
+    cannot: ["править главы", "коммитить"]
+
+# ПРЕДОХРАНИТЕЛИ
+limits:
+  fail_budget_per_task: 2        # после второго провала — остановка и вопрос человеку
+  expensive_model_for_drafts: false
+  commit_and_push: "только по слову заказчика"
+  subagents: "исполнителю звать нельзя, если в брифе сказано «исполнитель один»"
+
+# ПРИЁМКА
+acceptance:
+  rule: "у каждого требования в задании есть повторяемый сигнал: скрипт или команда"
+  metrics_from_writer: false     # количественные метрики от писателя не требовать
+  verdict_source: ".factory/goals/"
+  checks:
+    - cmd: "python .factory/logs/check_rules.py"
+      signal: "ВСЁ ВАЛИДНО"
+      covers: "стоп-лист, выдуманные слова, пояснения, места образов"
+    - cmd: "python .factory/logs/check_core.py"
+      signal: "ЯДРО СВЕРЯЕТСЯ"
+      covers: "карта смыслов против текста"
+    - cmd: "python .factory/logs/check_vrezki.py"
+      signal: "СОВПАДАЮТ"
+      covers: "черновики врезок против глав"
+
+# МОДЕЛИ: чего избегать
+model_notes:
+  - "cursor-acp рвётся на длинных прогонах: сессия обрывается после промпта, артефакта нет; для чтения и анализа — deepseek"
+  - "роль задаётся флагом --role, модель роли перебивается --model только осознанно"
