@@ -7,13 +7,10 @@ paths:
   text: "v4/"                    # главы сценария
   style: "v4/STYLE.md"           # закон языка
   core: "v4/ментальная-модель.md"   # карта смыслов
-  zloba: "v4/ссылки.md"       # реестр болей дня (только с якорем)
-  anchors: "v4/ссылки.md"    # реестр исследований
+  ссылки: "v4/ссылки.md"      # внешнее основание: исследования и боли дня
   briefs: ".factory/briefs/"     # задания
   goals: ".factory/goals/"       # отчёты
-  drafts: ".factory/drafts/"     # врезки до вставки
   checks: ".factory/logs/"       # скрипты проверок
-  archive: ".factory/archive/"   # история
 
 # РОЛИ: кто на чём сидит и что может
 roles:
@@ -56,7 +53,7 @@ roles:
 # ПРЕДОХРАНИТЕЛИ
 limits:
   fail_budget_per_task: 2        # после второго провала — остановка и вопрос человеку
-  expensive_model_for_drafts: false
+  expensive_model_on_rough_work: false
   commit_and_push: "только по слову заказчика"
   subagents: "исполнителю звать нельзя, если в брифе сказано «исполнитель один»"
 
@@ -99,8 +96,6 @@ acceptance:
       points_at: "нарушения стоп-листа, выдуманные слова, термины без пояснения"
     - cmd: "python .factory/logs/check_core.py"
       points_at: "места, где текст разошёлся с картой смыслов"
-    - cmd: "python .factory/logs/check_vrezki.py"
-      points_at: "расхождения черновика врезки с главой"
     - cmd: "python .factory/logs/check_text.py"
       points_at: "дословные повторы между главами"
     - cmd: "python .factory/logs/check_source.py"
