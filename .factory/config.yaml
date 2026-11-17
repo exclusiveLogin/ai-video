@@ -95,7 +95,7 @@ acceptance:
     - cmd: "python .factory/logs/check_rules.py"
       points_at: "нарушения стоп-листа, выдуманные слова, термины без пояснения"
     - cmd: "python .factory/logs/check_core.py"
-      points_at: "места, где текст разошёлся с картой смыслов"
+      points_at: "выписки ментальной модели, которые не нашлись в тексте"
     - cmd: "python .factory/logs/check_text.py"
       points_at: "дословные повторы между главами"
     - cmd: "python .factory/logs/check_source.py"

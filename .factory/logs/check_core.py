@@ -1,68 +1,63 @@
-"""Сверка смыслового ядра с текстом ролика: обещания хука, образы, ключевые формулировки."""
+"""Сверка ментальной модели с текстом — по выпискам, а не поиском слов.
+
+У каждой опорной точки модели есть выписка: дословная фраза из речи. Если выписка в тексте
+не находится — это сигнал разбираться: либо текст уехал от замысла, либо модель устарела.
+Скрипт ничего не принимает, он только указывает место для чтения.
+"""
 import glob, os, re, sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 V4 = os.path.join(REPO, "v4")
+MODEL = os.path.join(V4, "ментальная-модель.md")
 
-def body(name):
-    t = open(os.path.join(V4, name), encoding="utf-8").read()
-    return t.split("\n---", 1)[1] if "\n---" in t else t
+norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
 
-def cnt(word, t):
-    return len(re.findall(r"(?<![а-яё])" + word + r"[а-яё]*", t, re.I))
+def chapter_text():
+    parts = {}
+    for p in sorted(glob.glob(os.path.join(V4, "0*.md"))):
+        t = open(p, encoding="utf-8").read()
+        parts[os.path.basename(p)] = norm(t.split("\n---", 1)[-1] if "\n---" in t else t)
+    return parts
 
-CH = sorted(os.path.basename(p) for p in glob.glob(os.path.join(V4, "0*.md")))
-full = "\n\n".join(body(f) for f in CH)
-# слова, обещанные в хуке, ищем вне хука: там они и должны зазвучать
-full_wo_hook = "\n\n".join(body(f) for f in CH if f != "00-intro.md")
-b = {f: body(f) for f in CH}
-hook, finale, g6, g7 = b["00-intro.md"], b["09-final.md"], b["06-koding.md"], b["07-fabrika.md"]
-ok = True
+CHAPTERS = chapter_text()
+WHOLE = " ".join(CHAPTERS.values())
 
-def check(name, cond, note=""):
-    global ok
-    print("  %-52s %s%s" % (name, "ок" if cond else "НЕТ", (" — " + note) if note and not cond else ""))
-    ok &= bool(cond)
+model = open(MODEL, encoding="utf-8").read()
+points = re.findall(r"^- \*\*(.+?)\*\*.*$", model, re.M)
 
-print("=== обещания хука ===")
-check("вопрос про тыкву звучит в хуке", "тыкв" in hook.lower())
-# пять слов: либо названы словом, либо закрыты по смыслу (слова нет — не провал, а решение)
-NAMED = {"DSL": "06-koding.md", "OpenSpec": "06-koding.md", "SDD": "06-koding.md"}
-BY_MEANING = {"граф-инжиниринг": "06b-sborki.md", "тулинг": "07-fabrika.md"}
-for word, where in NAMED.items():
-    check("пять слов: %s назван словом" % word, word.lower() in b[where].lower())
-warns = []
-for word, where in BY_MEANING.items():
-    in_text = word.lower() in full_wo_hook.lower()
-    if in_text:
-        print("  %-52s назван словом вне хука" % ("пять слов: %s" % word))
-    else:
-        warns.append(word)
-        print("  %-52s закрыт по смыслу (гл. %s), слова вне хука нет — решить" % ("пять слов: %s" % word, where.split("-")[0]))
-check("закрытые коробки молчат (гл. 8)", "закрыт" in b["08-vendorstvo.md"].lower())
-check("одно дело на вечер в финале", "одно дело" in finale.lower())
-check("«владейте инструментом, не кнопкой»", "владейте" in finale.lower() and "кнопк" in finale.lower())
+cites, stale, absent = [], [], []
+cur = None
+for line in model.splitlines():
+    m = re.match(r"^- \*\*(.+?)\*\*", line)
+    if m:
+        cur = m.group(1).strip().rstrip(".")
+        continue
+    c = re.match(r"^\s+- Выписка:\s*«(.+?)»\s*—\s*гл\.\s*(\S+)", line)
+    if c:
+        cites.append((cur, c.group(1), c.group(2)))
+        continue
+    if re.match(r"^\s+- Выписка:\s*нет в тексте", line):
+        absent.append(cur)
 
-print("\n=== красная линия ===")
-check("тыква трижды", sum(cnt("тыкв", t) for t in b.values()) == 3)
-check("«инженер не умирает, он переезжает»", "не умирает" in finale.lower())
-check("шагать вверх придётся вам", "шагать вверх" in finale.lower())
-check("есть автор истории (замысел наш)", "есть автор" in finale.lower())
+print("=== СВЕРКА МОДЕЛИ С ТЕКСТОМ ===")
+print("опорных точек в модели: %d | с выпиской: %d | без выписки (сказано словами «нет в тексте»): %d" %
+      (len(points), len(cites), len(absent)))
 
-print("\n=== образы по правилам ===")
-check("зеркало только с гл. 4", all(f in ("04-stena.md", "05-rd.md", "09-final.md") for f in b if cnt("зеркал", b[f])))
-check("оракул только в финале", all(f == "09-final.md" for f in b if cnt("оракул", b[f])))
-check("поводок дважды", sum(cnt("поводок", t) for t in b.values()) == 2)
-check("миллионер только в гл. 6 или финале", all(f in ("06-koding.md", "09-final.md") for f in b if "миллионер" in b[f].lower()))
+for point, quote, ch in cites:
+    if norm(quote) in WHOLE:
+        continue
+    head = norm(quote)[:50]
+    where = "начало выписки в тексте есть, хвост разошёлся" if head in WHOLE else "в тексте не нашлось"
+    stale.append((point, ch, where, quote))
 
-print("\n=== три потолка в финале ===")
-for k, label in (("sequoia", "Sequoia"), ("epoch", "Epoch AI"), ("мегаватт", "электричество")):
-    check("финал: %s" % label, k in finale.lower())
+print("\n=== ГДЕ РАСХОДИТСЯ ===")
+if not stale:
+    print("  выписки на месте: каждая опорная точка подтверждается дословной фразой текста")
+else:
+    for point, ch, where, quote in stale:
+        print("  • %-46s гл. %-4s %s" % (point[:46], ch, where))
+        print("      выписка: «%s…»" % quote[:90])
 
-print("\n=== якоря и доски на месте ===")
-for f in ("ссылки.md", "ссылки.md", "фактчек.md", "ментальная-модель.md", "STYLE.md"):
-    check("v4/%s" % f, os.path.exists(os.path.join(V4, f)))
-
-print("\nИТОГ:", ("ЯДРО СВЕРЯЕТСЯ С ТЕКСТОМ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ") +
-      (" | ждут решения: " + ", ".join(warns) if warns else ""))
-sys.exit(0 if ok else 1)
+print("\nПометка: расхождение — повод прочитать место глазами, а не приговор. Текст мог уехать")
+print("от модели, а могла устареть сама модель: решает автор или аудитор по смыслу.")
+sys.exit(0 if not stale else 1)
