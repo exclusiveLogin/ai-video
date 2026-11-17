@@ -11,8 +11,8 @@
 """
 import os, sys, time
 
-DEFAULT_TIMEOUT = 45 * 60      # сколько всего ждать
-POLL = 10                      # как часто смотреть
+DEFAULT_TIMEOUT = int(os.environ.get("WAIT_GOAL_TIMEOUT", 45 * 60))   # сколько всего ждать, сек
+POLL = int(os.environ.get("WAIT_GOAL_POLL", 10))                      # как часто смотреть
 STABLE_DEFAULT = 25            # сколько секунд размер должен не меняться
 
 def main():
