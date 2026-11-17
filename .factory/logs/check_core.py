@@ -60,7 +60,7 @@ for k, label in (("sequoia", "Sequoia"), ("epoch", "Epoch AI"), ("мегават
     check("финал: %s" % label, k in finale.lower())
 
 print("\n=== якоря и доски на месте ===")
-for f in ("анкоры-рой.md", "злоба-дня.md", "фактчек.md", "смысловое-ядро.md", "STYLE.md"):
+for f in ("ссылки.md", "ссылки.md", "фактчек.md", "ментальная-модель.md", "STYLE.md"):
     check("v4/%s" % f, os.path.exists(os.path.join(V4, f)))
 
 print("\nИТОГ:", ("ЯДРО СВЕРЯЕТСЯ С ТЕКСТОМ" if ok else "ЕСТЬ РАСХОЖДЕНИЯ") +
