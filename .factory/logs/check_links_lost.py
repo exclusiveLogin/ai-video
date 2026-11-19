@@ -1,13 +1,17 @@
 import subprocess, glob, os
 
-files = [p.replace(os.sep, '/') for p in sorted(glob.glob('v4/0*.md'))]
+files = [p.replace(os.sep, '/') for p in sorted(glob.glob('v5/*/0*.md'))]
 print(f"{'файл':28} {'метки было→стало':>18} {'ссылки было→стало':>18}")
 bad = []
 for f in files:
     r = subprocess.run(['git', 'show', 'HEAD:' + f], capture_output=True)
     if r.returncode != 0:
-        print(f, 'ОШИБКА git:', r.stderr.decode('utf-8', 'replace')[:90])
-        continue
+        # файл новый (ещё не в HEAD) — сравниваем с предшественником в v4
+        alt = 'HEAD:v4/' + os.path.basename(f)
+        r = subprocess.run(['git', 'show', alt], capture_output=True)
+        if r.returncode != 0:
+            print(f"{os.path.basename(f):28} новый файл, сравнивать не с чем")
+            continue
     old = r.stdout.decode('utf-8', errors='replace')
     new = open(f, encoding='utf-8').read()
     m0, m1 = old.count('[КАРТА'), new.count('[КАРТА')

@@ -1,9 +1,17 @@
-"""Проверка глав v4 против правил v4/STYLE.md: стоп-лист, выдуманные слова, образы, эхо."""
+"""Проверка глав v5 против правил v5/STYLE.md: стоп-лист, выдуманные слова, образы, эхо."""
 import glob, os, re, collections
+import os
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V4 = os.path.join(REPO, "v4")
-CH = sorted(os.path.basename(p) for p in glob.glob(os.path.join(V4, "0*.md")))
+V4 = os.path.join(REPO, "v5")
+
+def _chap(name):
+    """Глава живёт в одной из частей: ищем по подпапкам, иначе корень v5."""
+    import glob as _g
+    hits = _g.glob(os.path.join(V4, "*", name))
+    return hits[0] if hits else os.path.join(V4, name)
+
+CH = sorted(os.path.basename(p) for p in glob.glob(os.path.join(V4, "*", "0*.md")))
 
 STOP = ["всегда", "априори", "незаменим", "в современном мире", "давайте погрузимся",
         "не секрет, что", "в конечном счёте", "резюмируя", "стоит отметить", "важно понимать"]
@@ -23,7 +31,7 @@ IMAGE_RULE = {
     "тыкв":    (["00-intro.md", "06-koding.md", "09-final.md"], "трижды: хук, панч гл. 6, финал"),
 }
 
-raw = {f: open(os.path.join(V4, f), encoding="utf-8").read() for f in CH}
+raw = {f: open(_chap(f), encoding="utf-8").read() for f in CH}
 titles = {f: t.splitlines()[0] for f, t in raw.items()}
 # служебная шапка (заголовок, Статус, Правка, Долги) до первого --- в озвучку не идёт
 texts = {f: (t.split("\n---", 1)[1] if "\n---" in t else t) for f, t in raw.items()}

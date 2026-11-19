@@ -7,14 +7,14 @@
 import glob, os, re, sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V4 = os.path.join(REPO, "v4")
+V4 = os.path.join(REPO, "v5")
 MODEL = os.path.join(V4, "ментальная-модель.md")
 
 norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
 
 def chapter_text():
     parts = {}
-    for p in sorted(glob.glob(os.path.join(V4, "0*.md"))):
+    for p in sorted(glob.glob(os.path.join(V4, "*", "0*.md"))):
         t = open(p, encoding="utf-8").read()
         parts[os.path.basename(p)] = norm(t.split("\n---", 1)[-1] if "\n---" in t else t)
     return parts

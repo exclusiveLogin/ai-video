@@ -5,9 +5,17 @@
 скрипт только сужает список до обозримого).
 """
 import glob, os, re, sys
+import os
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V4 = os.path.join(REPO, "v4")
+V4 = os.path.join(REPO, "v5")
+
+def _chap(name):
+    """Глава живёт в одной из частей: ищем по подпапкам, иначе корень v5."""
+    import glob as _g
+    hits = _g.glob(os.path.join(V4, "*", name))
+    return hits[0] if hits else os.path.join(V4, name)
+
 CH = os.path.join(REPO, "chapters")
 
 MAP = {
@@ -44,7 +52,7 @@ for ch, src in MAP.items():
     if not os.path.exists(ps):
         report.append("%s: источник не найден" % ch); continue
     src_paras = [p for p in paras(open(ps, encoding="utf-8").read()) if len(p.split()) >= 8]
-    v4_paras = [p for p in paras(open(os.path.join(V4, ch), encoding="utf-8").read()) if len(p.split()) >= 5]
+    v4_paras = [p for p in paras(open(_chap(ch), encoding="utf-8").read()) if len(p.split()) >= 5]
     v4_sigs = [sig(p) for p in v4_paras]
     lost = []
     for p in src_paras:

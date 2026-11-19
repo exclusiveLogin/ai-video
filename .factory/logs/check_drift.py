@@ -11,8 +11,16 @@
 Ничего не пишет на диск, только печатает. Числа — не приёмка, а адрес для чтения.
 """
 import sys
+import os
 
-V4 = 'v4'
+V4 = 'v5'
+
+def _chap(name):
+    """Глава живёт в одной из частей: ищем по подпапкам, иначе корень v5."""
+    import glob as _g
+    hits = _g.glob(os.path.join(V4, "*", name))
+    return hits[0] if hits else os.path.join(V4, name)
+
 CHAPTERS = ['00-intro', '02-teoriya', '03a-emerdzhentnost', '03b-mlp-transformer',
             '03c-dva-rezhima', '04-stena', '05-rd', '06-koding', '06b-sborki',
             '07-fabrika', '07b-lokalny-zapusk', '08-vendorstvo', '09-final']
@@ -43,7 +51,7 @@ WATCH = ['тыкв', 'синтаксис', 'трансформер', 'режим
 
 speech = {}
 for name in CHAPTERS:
-    t = open(f'{V4}/{name}.md', encoding='utf-8').read()
+    t = open(_chap(f'{name}.md'), encoding='utf-8').read()
     body = t.split('\n---', 1)[-1] if '\n---' in t else t
     speech[name] = body.lower().replace('ё', 'е')
 
@@ -62,7 +70,7 @@ for label, stem in TERMS:
 print()
 print('ось 2. служебные шапки про изменённые смыслы')
 for name in CHAPTERS:
-    lines = open(f'{V4}/{name}.md', encoding='utf-8').read().split('\n---')[0].splitlines()
+    lines = open(_chap(f'{name}.md'), encoding='utf-8').read().split('\n---')[0].splitlines()
     for i, line in enumerate(lines, 1):
         low = line.lower()
         if any(w in low for w in WATCH) and len(line.strip()) > 40 and not line.startswith('#'):

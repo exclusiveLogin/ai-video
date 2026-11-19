@@ -5,7 +5,7 @@
 import collections, glob, os, re, sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V4 = os.path.join(REPO, "v4")
+V4 = os.path.join(REPO, "v5")
 
 def speech(path):
     t = open(path, encoding="utf-8").read()
@@ -14,7 +14,7 @@ def speech(path):
 def paragraphs(path):
     return [p for p in re.split(r"(?:\r?\n){2,}", speech(path)) if p.strip()]
 
-chapters = sorted(glob.glob(os.path.join(V4, "0*.md")))
+chapters = sorted(glob.glob(os.path.join(V4, "*", "0*.md")))
 problems = 0
 
 # 1. дословные и почти дословные повторы между главами

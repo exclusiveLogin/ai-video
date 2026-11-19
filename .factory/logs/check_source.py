@@ -1,13 +1,21 @@
-"""Сверка глав v4 с первоисточниками chapters/: чего из источника в тексте нет.
+"""Сверка глав v5 с первоисточниками chapters/: чего из источника в тексте нет.
 
 Ловит вещи, на которые не смотрит ни одна другая проверка: числа, годы, имена и термины,
 которые были в исходнике и не дошли до речи. Помогает и при вопросе «не потеряли ли мы что-то
 по дороге», и при сборке версии из нескольких линий.
 """
 import glob, os, re, sys
+import os
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-V4 = os.path.join(REPO, "v4")
+V4 = os.path.join(REPO, "v5")
+
+def _chap(name):
+    """Глава живёт в одной из частей: ищем по подпапкам, иначе корень v5."""
+    import glob as _g
+    hits = _g.glob(os.path.join(V4, "*", name))
+    return hits[0] if hits else os.path.join(V4, name)
+
 CH = os.path.join(REPO, "chapters")
 
 # глава v4 → первоисточник
@@ -46,10 +54,10 @@ print("%-24s %6s %6s %7s  %s" % ("глава", "источник", "v4", "дел
 missing_total = 0
 # весь текст v4: чтобы не считать потерей то, что переехало в другую главу
 whole_v4 = " ".join(speech(open(p, encoding="utf-8").read())
-                    for p in sorted(glob.glob(os.path.join(V4, "0*.md")))).lower()
+                    for p in sorted(glob.glob(os.path.join(V4, "*", "0*.md")))).lower()
 
 for ch, src in MAP.items():
-    p4, ps = os.path.join(V4, ch), os.path.join(CH, src)
+    p4, ps = _chap(ch), os.path.join(CH, src)
     if not os.path.exists(ps):
         print("%-24s источник не найден: %s" % (ch, src))
         continue
