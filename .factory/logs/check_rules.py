@@ -92,7 +92,7 @@ for img, (allowed, rule) in IMAGE_RULE.items():
     print("  %-9s всего=%-3d %-52s %s" % (img, sum(st.values()), str(st), verdict))
 
 print("\n=== 4. ЭХО до трёх: сколько раз образ звучит словом ===")
-for img, want in (("тыкв", 3), ("поводок", 2)):
+for img, want in (("тыкв", 3), ("поводок", 1)):  # поводок: решение 2026-11-19 — в финале звучит идеей, не словом
     n = sum(wc(img, t) for t in texts.values())
     flag = "ок" if n == want else "РАСХОЖДЕНИЕ с законом (записано: %d)" % want
     print("  %-9s словом %d раз(а) — %s" % (img, n, flag))
